@@ -1,0 +1,17 @@
+{
+  "name": "quicmark-preview",
+  "version": "0.0.1",
+  "description": "Quick realtime preview for CommonMark ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "mitaki28",
+  "license": "ISC",
+  "devDependencies": {
+    "browserify": "^11.2.0"
+  },
+  "dependencies": {
+    "commonmark": "^0.22.0"
+  }
+}
