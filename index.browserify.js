@@ -58,17 +58,81 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 },{"./lib/dom":2,"commonmark":221}],2:[function(require,module,exports){
-var crypto = require('crypto');
+'use strict';
 
-var foreachChild = function(node, f) {
-    for (var child = node.firstChild;
+let crypto = require('crypto');
+
+let foreachChild = function(node, f) {
+    for (let child = node.firstChild;
 	 child !== null;
 	 child = child.next) {
 	f(child);
     }    
 };
 
-var renderer = {
+let appendChildren = function(node, dom) {
+    foreachChild(node, (child) => {
+	dom.appendChild(render(child));
+    });
+    return dom;
+};
+
+let appendChildrenTo = function(node, tagname) {
+    return appendChildren(node, document.createElement(tagname));
+};
+
+let updater = {
+    Text: function(node, dom) {
+	dom.textContent = node.literal;
+    },
+    Softbreak: function(node, dom) {
+	dom.textContent = '\n';
+    },
+    Hardbreak: function(node, dom) {},
+    Emph: function(node, dom) {},
+    Strong: function(node, dom) {},
+    Html: function(node, dom) {
+	console.warn('raw html is not supported');
+	dom.textContent = node.literal;
+    },
+    Link: function(node, dom) {
+	dom.setAttribute('href', node.destination);
+	if (node.title) {
+	    dom.setAttribute('title', node.title);
+	}
+    },
+    Image: function(node, dom) {
+	dom.setAttribute('src', node.destination);
+	if (node.title) {
+	    dom.setAttribute('title', node.title);
+	}
+    },
+    Code: function(node, dom) {
+	dom.firstChild.textContent = node.literal;
+    },
+    Document: function(node, dom) {},
+    Paragraph: function(node, dom) {},
+    BlockQuote: function(node, dom) {},
+    Item: function(node, dom) {},
+    List: function(node, dom) {
+	if (node.listStart != null &&
+	    node.listStart != 1) {
+	    dom.setAttribute('start',
+			     node.listStart.toString());
+	}
+    },
+    Header: function(node, dom) {},
+    CodeBlock: function(node, dom) {
+	dom.firstChild.firstChild.textContent = node.literal;
+    },
+    HtmlBlock: function(node, dom) {
+	console.warn('raw html block is not supported');
+	dom.firstChild.textContent = node.literal;
+    },
+    HorizontalRule: function(node, dom) {}    
+};
+
+let renderer = {
     Text: function(node) {
 	return document.createTextNode(node.literal);
     },
@@ -89,7 +153,7 @@ var renderer = {
 	return document.createTextNode(node.literal);
     },
     Link: function(node) {
-	var dom = document.createElement('a');
+	let dom = document.createElement('a');
 	dom.setAttribute('href', node.destination);
 	if (node.title) {
 	    dom.setAttribute('title', node.title);
@@ -97,9 +161,9 @@ var renderer = {
 	return appendChildren(node, dom);
     },
     Image: function(node) {
-	var dom = document.createElement('image');
+	let dom = document.createElement('image');
 	dom.setAttribute('src', node.destination);
-	var buf = [];
+	let buf = [];
 	foreachChild(node, (child) => {
 	    buf.push(render(child).textContent);
 	});
@@ -110,7 +174,7 @@ var renderer = {
 	return dom;
     },
     Code: function(node) {
-	var dom = document.createElement('code');
+	let dom = document.createElement('code');
 	dom.appendChild(document.createTextNode(node.literal));
 	return dom;
     },
@@ -127,7 +191,7 @@ var renderer = {
 	return appendChildrenTo(node, 'li');	
     },
     List: function(node) {
-	var dom = document.createElement(
+	let dom = document.createElement(
 	    node.listType == 'Bullet' ? 'ul' : 'ol');
 	if (node.listStart != null &&
 	    node.listStart != 1) {
@@ -140,16 +204,16 @@ var renderer = {
 	return appendChildrenTo(node, 'h' + node.level);
     },
     CodeBlock: function(node) {
-	var text = document.createTextNode(node.literal);
-	var code = document.createElement('code');
-	var pre = document.createElement('pre');
+	let text = document.createTextNode(node.literal);
+	let code = document.createElement('code');
+	let pre = document.createElement('pre');
 	code.appendChild(text);
 	pre.appendChild(code);
 	return pre;
     },
     HtmlBlock: function(node) {
 	console.warn('raw html block is not supported');
-	var dom = document.createElement('div');
+	let dom = document.createElement('div');
 	dom.appendChild(document.createTextNode(node.literal));
 	return dom;
     },
@@ -158,29 +222,19 @@ var renderer = {
     }
 };
 
-var appendChildrenTo = function(node, tagname) {
-    return appendChildren(node, document.createElement(tagname));
-};
 
-var appendChildren = function(node, dom) {
-    foreachChild(node, (child) => {
-	dom.appendChild(render(child));
-    });
-    return dom;
-};
-
-var render = function(node) {
-    var dom = renderer[node.type](node);
+let render = function(node) {
+    let dom = renderer[node.type](node);
     node.dom = dom;
     return dom;
 };
 
-var RollingHash = function() {
+let RollingHash = function() {
     this.hash = 0;
 };
 
 RollingHash.prototype.updateWithString = function(s) {
-    for (var i = 0; i < s.length; i++) {
+    for (let i = 0; i < s.length; i++) {
 	this.hash = (this.hash * 13 + s.charCodeAt(i)) % 1000000007;
     }
     return;
@@ -195,9 +249,9 @@ RollingHash.prototype.digest = function(s) {
 };
 
 
-var calcAttrHash = function(node) {
-    var hasher = new RollingHash;
-    var attrs = [
+let calcAttrHash = function(node) {
+    let hasher = new RollingHash;
+    let attrs = [
 	node.type,
 	node.literal,
 	node.destination,
@@ -213,42 +267,40 @@ var calcAttrHash = function(node) {
     return node.attrHashCode = hasher.digest();
 };
 
-var calcChildrenHash = function(node) {
-    var hasher = new RollingHash;
+let calcChildrenHash = function(node) {
+    let hasher = new RollingHash;
     foreachChild(node, (child) => {
 	hasher.updateWithInteger(calcHash(child));
     });
     return node.childrenHashCode = hasher.digest();
 };
 
-var calcHash = function(node) {
-    var hasher = new RollingHash;
+let calcHash = function(node) {
+    let hasher = new RollingHash;
     hasher.updateWithInteger(calcAttrHash(node));
     hasher.updateWithInteger(calcChildrenHash(node));
     return node.hashCode = hasher.digest();
 };
 
-var renderDiff = function(node1, node2) {
+let renderDiff = function(node1, node2) {
+    //console.log('update', node1.dom);
     if (node1.hashCode == node2.hashCode) {
-	node2.dom = node1.dom;
-	for (var child1 = node1.firstChild,
-		 child2 = node2.firstChild;
-	     child1 != null && child2 != null;
-	     child1 = child1.next, child2 = child2.next) {
-	    renderDiff(child1, child2);
-	}
-	return node2.dom;
+	throw 'hashCode must be difference';
     }
     if (node1.attrHashCode != node2.attrHashCode) {
-	if (node1.type != node2.type) {
+	if (node1.type != node2.type
+	    || (node1.type == 'List'
+		&& node1.listType != node2.listType)
+	    || (node1.type == 'Header'
+		&& node1.level != node2.level)) {
 	    node2.dom = render(node2);
 	    return node2.dom;
 	}
-	// TODO
+	updater[node2.type](node2, node1.dom);
     }
-    var dom = node2.dom = node1.dom;
+    let dom = node2.dom = node1.dom;
     if (node1.childrenHashCode != node2.childrenHashCode) {
-	var cache = new Map, needed = new Map, rest = [];
+	let cache = new Map, needed = new Map, rest = [];
 	foreachChild(node2, (child) => {
 	    if (!(child.hashCode in needed)) {
 		needed[child.hashCode] = [];
@@ -258,33 +310,39 @@ var renderDiff = function(node1, node2) {
 	foreachChild(node1, (child) => {
 	    if (needed[child.hashCode] != null
 		&& needed[child.hashCode].length) {
-		rest.push(child);
-		needed[child.hashCode].pop();
-	    } else {
 		if (!(child.hashCode in cache)) {
 		    cache[child.hashCode] = [];
-		}
+		}		
 		cache[child.hashCode].push(child);
+		needed[child.hashCode].pop();
+	    } else {
+		rest.push(child);
 	    }
 	    dom.removeChild(child.dom);
 	});
+	let removed = [];
 	foreachChild(node2, (child) => {
-	    if (cache[child.hashCode] && cache[child.hashCode].length) {
-		dom.appendChild(renderDiff(cache[child.hashCode].shift(), child));
+	    if (cache[child.hashCode]
+		&& cache[child.hashCode].length) {
+		let replaced = cache[child.hashCode].shift();
+		child.insertBefore(replaced);
+		removed.push(child);
+		dom.appendChild(replaced.dom);
 	    } else if (rest.length) {
 		dom.appendChild(renderDiff(rest.shift(), child));
 	    } else {
 		dom.appendChild(render(child));
 	    }
 	});
+	removed.forEach((node) => node.unlink());
     }
     return dom;
 };
 
-var SimpleRenderer = function() {};
+let SimpleRenderer = function() {};
 SimpleRenderer.prototype.render = render;
 
-var DiffRenderer = function() {
+let DiffRenderer = function() {
     this.tree = null;
 };
 DiffRenderer.prototype.calcHash = calcHash;
@@ -292,14 +350,17 @@ DiffRenderer.prototype.render = function(tree) {
     console.time('hash');
     calcHash(tree);
     console.timeEnd('hash');
-    var dom = null;
+    let dom = null;
     if (this.tree == null) {
 	dom = render(tree);
+    } else if (this.tree.hashCode == tree.hashCode) {
+	tree = this.tree;
+	dom = this.tree.dom;
     } else {
-	dom = renderDiff(this.tree, tree);
+	renderDiff(this.tree, tree);
     }
     this.tree = tree;
-    return dom;
+    return this.tree.dom;
 };
 module.exports.SimpleRenderer = SimpleRenderer;
 module.exports.DiffRenderer = DiffRenderer;
