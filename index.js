@@ -1,8 +1,8 @@
 var cmark = require('commonmark');
-var domrenderers = require('./lib/dom');
+var domCreators = require('./lib/dom');
 var htmlrenderer = new cmark.HtmlRenderer;
-var domrenderer = new domrenderers.SimpleRenderer();
-var diffrenderer = new domrenderers.DiffRenderer();
+var domCreator = new domCreators.SimpleCreator();
+var diffrenderer = new domCreators.DiffCreator();
 var parser = new cmark.Parser();
 
 window.addEventListener('DOMContentLoaded', function() {
@@ -13,7 +13,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var renderers = {
 	dom: function(tree, preview) {
 	    console.time('render(internal)');
-	    var dom = domrenderer.render(tree);
+	    var dom = domCreator.create(tree);
 	    console.timeEnd('render(internal)');
 	    console.time('render(output)');
 	    preview.innerHTML = '';
@@ -30,11 +30,11 @@ window.addEventListener('DOMContentLoaded', function() {
 	},
 	diff: function(tree, preview) {
 	    if (diffrenderer.tree == null) {
-		var dom = diffrenderer.render(tree);
+		var dom = diffrenderer.create(tree);
 		preview.innerHTML = '';		
 		preview.appendChild(dom);
 	    } else {
-		diffrenderer.render(tree);
+		diffrenderer.create(tree);
 	    }
 	}
     };

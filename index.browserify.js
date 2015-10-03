@@ -1,9 +1,9 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var cmark = require('commonmark');
-var domrenderers = require('./lib/dom');
+var domCreators = require('./lib/dom');
 var htmlrenderer = new cmark.HtmlRenderer;
-var domrenderer = new domrenderers.SimpleRenderer();
-var diffrenderer = new domrenderers.DiffRenderer();
+var domCreator = new domCreators.SimpleCreator();
+var diffrenderer = new domCreators.DiffCreator();
 var parser = new cmark.Parser();
 
 window.addEventListener('DOMContentLoaded', function() {
@@ -14,7 +14,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var renderers = {
 	dom: function(tree, preview) {
 	    console.time('render(internal)');
-	    var dom = domrenderer.render(tree);
+	    var dom = domCreator.create(tree);
 	    console.timeEnd('render(internal)');
 	    console.time('render(output)');
 	    preview.innerHTML = '';
@@ -31,11 +31,11 @@ window.addEventListener('DOMContentLoaded', function() {
 	},
 	diff: function(tree, preview) {
 	    if (diffrenderer.tree == null) {
-		var dom = diffrenderer.render(tree);
+		var dom = diffrenderer.create(tree);
 		preview.innerHTML = '';		
 		preview.appendChild(dom);
 	    } else {
-		diffrenderer.render(tree);
+		diffrenderer.create(tree);
 	    }
 	}
     };
@@ -60,7 +60,7 @@ window.addEventListener('DOMContentLoaded', function() {
 },{"./lib/dom":2,"commonmark":7}],2:[function(require,module,exports){
 'use strict';
 
-var foreachChild = function(node, f) {
+var forEachChild = function(node, f) {
     for (var child = node.firstChild;
 	 child !== null;
 	 child = child.next) {
@@ -68,7 +68,7 @@ var foreachChild = function(node, f) {
     }    
 };
 
-var foreachChildWithRemove = function(node, f) {
+var forEachChildWithRemove = function(node, f) {
     for (var child = node.firstChild, next = child.next;
 	 child !== null;
 	 child = next, next = child ? child.next : null) {
@@ -77,8 +77,8 @@ var foreachChildWithRemove = function(node, f) {
 };
 
 var appendChildren = function(node, dom) {
-    foreachChild(node, (child) => {
-	dom.appendChild(render(child));
+    forEachChild(node, (child) => {
+	dom.appendChild(create(child));
     });
     return dom;
 };
@@ -138,7 +138,7 @@ var updater = {
     HorizontalRule: function(node, dom) {}    
 };
 
-var renderer = {
+var creator = {
     Text: function(node) {
 	return document.createTextNode(node.literal);
     },
@@ -170,8 +170,8 @@ var renderer = {
 	var dom = document.createElement('image');
 	dom.setAttribute('src', node.destination);
 	var buf = [];
-	foreachChild(node, (child) => {
-	    buf.push(render(child).textContent);
+	forEachChild(node, (child) => {
+	    buf.push(create(child).textContent);
 	});
 	dom.setAttribute('alt', buf.join(''));
 	if (node.title) {
@@ -228,9 +228,8 @@ var renderer = {
     }
 };
 
-
-var render = function(node) {
-    var dom = renderer[node.type](node);
+var create = function(node) {
+    var dom = creator[node.type](node);
     node.dom = dom;
     return dom;
 };
@@ -241,13 +240,13 @@ var RollingHash = function() {
 
 RollingHash.prototype.updateWithString = function(s) {
     for (var i = 0; i < s.length; i++) {
-	this.hash = (this.hash * 11 + s.charCodeAt(i)) & 70368744177663;
+	this.updateWithInteger(s.charCodeAt(i));
     }
-    return;
 };
 
 RollingHash.prototype.updateWithInteger = function(s) {
-    this.hash = (this.hash * 11 + s) & 70368744177663;
+    // 'x >>> 0' <=> ToUint32(x), see ECMA262
+    this.hash = (17 * this.hash + s) >>> 0;
 };
 
 RollingHash.prototype.digest = function(s) {
@@ -275,7 +274,7 @@ var calcAttrHash = function(node) {
 
 var calcChildrenHash = function(node) {
     var hasher = new RollingHash;
-    foreachChild(node, (child) => {
+    forEachChild(node, (child) => {
 	hasher.updateWithInteger(calcHash(child));
     });
     return node.childrenHashCode = hasher.digest();
@@ -288,7 +287,7 @@ var calcHash = function(node) {
     return node.hashCode = hasher.digest();
 };
 
-var renderDiff = function(node1, node2) {
+var update = function(node1, node2) {
     if (node1.hashCode == node2.hashCode) {
 	throw 'hashCode must be difference';
     }
@@ -298,48 +297,55 @@ var renderDiff = function(node1, node2) {
 		&& node1.listType != node2.listType)
 	    || (node1.type == 'Header'
 		&& node1.level != node2.level)) {
-	    node2.dom = render(node2);
+	    node2.dom = create(node2);
 	    return node2.dom;
 	}
 	updater[node2.type](node2, node1.dom);
     }
     var dom = node2.dom = node1.dom;
     if (node1.childrenHashCode != node2.childrenHashCode) {
-	renderDiffChildren(node1, node2);
+	updateChildren(node1, node2);
     }
     return dom;
 };
 
-var renderDiffChildren = function(node1, node2) {
+var updateChildren = function(node1, node2) {
     var dom = node2.dom;
-    var c1l = node1.firstChild, c2l = node2.firstChild;
+    var c1l = node1.firstChild, c2l = node2.firstChild,
+	c1l_next, c2l_next;
     while (c1l != null && c2l != null
 	   && c1l.hashCode == c2l.hashCode) {
-	const c1l_next = c1l.next, c2l_next = c2l.next;
+	c1l_next = c1l.next, c2l_next = c2l.next;
 	c2l.insertBefore(c1l);
 	c2l.unlink();
 	c1l = c1l_next, c2l = c2l_next;
     }
     c1l = (c1l != null ? c1l.prev : node1.lastChild);
     c2l = (c2l != null ? c2l.prev : node2.lastChild);
-    var c1r = node1.lastChild, c2r = node2.lastChild;
+    var c1r = node1.lastChild, c2r = node2.lastChild,
+	c1r_prev, c2r_prev;
     while (c1l != c1r && c2l != c2r &&
 	   c1r.hashCode == c2r.hashCode) {
-	const c1r_prev = c1r.prev, c2r_prev = c2r.prev;
+	c1r_prev = c1r.prev, c2r_prev = c2r.prev;
 	c2r.insertAfter(c1r);
 	c2r.unlink();
 	c1r = c1r_prev, c2r = c2r_prev;
     }
     while (c1l != c1r && c2l != c2r) {
-	const c1r_prev = c1r.prev, c2r_prev = c2r.prev;
-	renderDiff(c1r, c2r);
-	if (c2r.dom != c1r.dom) {
-	    dom.replaceChild(c2r.dom, c1r.dom);
+	c1r_prev = c1r.prev, c2r_prev = c2r.prev;
+	if (c1r.hashCode != c2r.hashCode) {
+	    update(c1r, c2r);
+	    if (c2r.dom != c1r.dom) {
+		dom.replaceChild(c2r.dom, c1r.dom);
+	    }
+	} else {
+	    c2r.insertAfter(c1r);
+	    c2r.unlink();
 	}
 	c1r = c1r_prev, c2r = c2r_prev;
     }
     while (c2l != c2r) {
-	render(c2r);
+	create(c2r);
 	if (c2l == null) {
 	    dom.insertBefore(c2r.dom, dom.firstChild);
 	} else {
@@ -353,31 +359,28 @@ var renderDiffChildren = function(node1, node2) {
     }
 };
 
-var SimpleRenderer = function() {};
-SimpleRenderer.prototype.render = render;
+var SimpleCreator = function() {};
+SimpleCreator.prototype.create = create;
 
-var DiffRenderer = function() {
+var DiffCreator = function() {
     this.tree = null;
 };
-DiffRenderer.prototype.calcHash = calcHash;
-DiffRenderer.prototype.render = function(tree) {
+DiffCreator.prototype.create = function(tree) {
     console.time('hash');
     calcHash(tree);
     console.timeEnd('hash');
-    var dom = null;
     if (this.tree == null) {
-	dom = render(tree);
+	create(tree);
     } else if (this.tree.hashCode == tree.hashCode) {
 	tree = this.tree;
-	dom = this.tree.dom;
     } else {
-	renderDiff(this.tree, tree);
+	update(this.tree, tree);
     }
     this.tree = tree;
     return this.tree.dom;
 };
-module.exports.SimpleRenderer = SimpleRenderer;
-module.exports.DiffRenderer = DiffRenderer;
+module.exports.SimpleCreator = SimpleCreator;
+module.exports.DiffCreator = DiffCreator;
 
 },{}],3:[function(require,module,exports){
 "use strict";
