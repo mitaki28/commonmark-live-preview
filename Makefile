@@ -1,8 +1,11 @@
 BROWSERIFY=node_modules/.bin/browserify
-TARGET=index.browserify.js
-INDEX=index.js
-SRC=$(wildcard lib/*.js) $(INDEX)
+MINIFY=node_modules/.bin/uglifyjs
+MINIFY_FLAGS=-m -c
+TARGET=example/index
+SRC=$(wildcard lib/*.js) $(TARGET).js
 
-all: index.browserify.js
-index.browserify.js: $(SRC)
-	$(BROWSERIFY) $(INDEX) -o $@ 
+.PHONY: all
+
+all: $(TARGET).browserify.js
+$(TARGET).browserify.js: $(SRC)
+	$(BROWSERIFY) $(TARGET).js -o $@ 
