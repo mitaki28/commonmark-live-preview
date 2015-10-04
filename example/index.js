@@ -1,8 +1,7 @@
 var cmark = require('commonmark');
-var domCreators = require('../');
+var DomCreator = require('../');
 var htmlRenderer = new cmark.HtmlRenderer;
-var domCreator = new domCreators.SimpleCreator();
-var creator = new domCreators.Creator();
+var creator = new DomCreator();
 var parser = new cmark.Parser();
 
 function removeChildren(dom) {
@@ -20,7 +19,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	},
 	dom: function(tree, preview) {
 	    console.time('render(internal)');
-	    var dom = domCreator.create(tree);
+	    var dom = creator.create(tree);
 	    console.timeEnd('render(internal)');
 	    console.time('render(output)');
 	    removeChildren(preview);
@@ -36,7 +35,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	    console.timeEnd('render(output)');
 	},
 	diff: function(tree, preview) {
-	    var dom = creator.create(tree);
+	    var dom = creator.update(tree);
 	    if (!preview.contains(dom)) {
 		removeChildren(preview);
 		preview.appendChild(dom);		
