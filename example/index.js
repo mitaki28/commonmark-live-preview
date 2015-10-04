@@ -1,8 +1,18 @@
 var cmark = require('commonmark');
+var hljs = require('highlight.js');
 var DomCreator = require('../');
 var htmlRenderer = new cmark.HtmlRenderer;
 var creator = new DomCreator();
 var parser = new cmark.Parser();
+
+creator.onUpdate['CodeBlock'] = (node) => {
+    var info_words = node.info ? node.info.split(/\s+/) : [];
+    if (info_words.length > 0 && info_words[0].length > 0) {
+	node.dom.innerHTML = hljs.highlight(info_words[0], node.literal).value;	
+    } else {
+	node.dom.innerHTML = hljs.highlightAuto(node.literal).value;
+    }
+};
 
 function removeChildren(dom) {
     while (dom.lastChild) dom.removeChild(dom.lastChild);
@@ -12,7 +22,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var text = document.getElementById('text');
     var preview = document.getElementById('preview');
     var modeSelector = document.getElementById('mode');
-    var mode = "dom";
+    var mode = "none";
     var renderers = {
 	none: function(tree, preview) {
 
