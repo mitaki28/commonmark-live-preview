@@ -16,6 +16,9 @@ window.addEventListener('DOMContentLoaded', function() {
     var modeSelector = document.getElementById('mode');
     var mode = "dom";
     var renderers = {
+	none: function(tree, preview) {
+
+	},
 	dom: function(tree, preview) {
 	    console.time('render(internal)');
 	    var dom = domCreator.create(tree);
