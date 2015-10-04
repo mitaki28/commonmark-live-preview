@@ -3,7 +3,7 @@ var cmark = require('commonmark');
 var domCreators = require('../');
 var htmlRenderer = new cmark.HtmlRenderer;
 var domCreator = new domCreators.SimpleCreator();
-var diffCreator = new domCreators.DiffCreator();
+var creator = new domCreators.Creator();
 var parser = new cmark.Parser();
 
 function removeChildren(dom) {
@@ -37,7 +37,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	    console.timeEnd('render(output)');
 	},
 	diff: function(tree, preview) {
-	    var dom = diffCreator.create(tree);
+	    var dom = creator.create(tree);
 	    if (!preview.contains(dom)) {
 		removeChildren(preview);
 		preview.appendChild(dom);		
@@ -93,147 +93,6 @@ var appendChildren = function(node, dom) {
 
 var appendChildrenTo = function(node, tagname) {
     return appendChildren(node, document.createElement(tagname));
-};
-
-var updater = {
-    Text: function(node, dom) {
-	dom.textContent = node.literal;
-    },
-    Softbreak: function(node, dom) {
-	dom.textContent = '\n';
-    },
-    Hardbreak: function(node, dom) {},
-    Emph: function(node, dom) {},
-    Strong: function(node, dom) {},
-    Html: function(node, dom) {
-	console.warn('raw html is not supported');
-	dom.textContent = node.literal;
-    },
-    Link: function(node, dom) {
-	dom.setAttribute('href', node.destination);
-	if (node.title) {
-	    dom.setAttribute('title', node.title);
-	}
-    },
-    Image: function(node, dom) {
-	dom.setAttribute('src', node.destination);
-	if (node.title) {
-	    dom.setAttribute('title', node.title);
-	}
-    },
-    Code: function(node, dom) {
-	dom.firstChild.textContent = node.literal;
-    },
-    Document: function(node, dom) {},
-    Paragraph: function(node, dom) {},
-    BlockQuote: function(node, dom) {},
-    Item: function(node, dom) {},
-    List: function(node, dom) {
-	if (node.listStart != null &&
-	    node.listStart != 1) {
-	    dom.setAttribute('start',
-			     node.listStart.toString());
-	}
-    },
-    Header: function(node, dom) {},
-    CodeBlock: function(node, dom) {
-	dom.firstChild.firstChild.textContent = node.literal;
-    },
-    HtmlBlock: function(node, dom) {
-	console.warn('raw html block is not supported');
-	dom.firstChild.textContent = node.literal;
-    },
-    HorizontalRule: function(node, dom) {}    
-};
-
-var creator = {
-    Text: function(node) {
-	return document.createTextNode(node.literal);
-    },
-    Softbreak: function(node) {
-	return document.createTextNode('\n');
-    },
-    Hardbreak: function(node) {
-	return document.createElement('br');
-    },
-    Emph: function(node) {
-	return appendChildrenTo(node, 'em');
-    },
-    Strong: function(node) {
-	return appendChildrenTo(node, 'strong');
-    },
-    Html: function(node) {
-	console.warn('raw html is not supported');
-	return document.createTextNode(node.literal);
-    },
-    Link: function(node) {
-	var dom = document.createElement('a');
-	dom.setAttribute('href', node.destination);
-	if (node.title) {
-	    dom.setAttribute('title', node.title);
-	}
-	return appendChildren(node, dom);
-    },
-    Image: function(node) {
-	var dom = document.createElement('image');
-	dom.setAttribute('src', node.destination);
-	var buf = [];
-	forEachChild(node, (child) => {
-	    buf.push(create(child).textContent);
-	});
-	dom.setAttribute('alt', buf.join(''));
-	if (node.title) {
-	    dom.setAttribute('title', node.title);
-	}
-	return dom;
-    },
-    Code: function(node) {
-	var dom = document.createElement('code');
-	dom.appendChild(document.createTextNode(node.literal));
-	return dom;
-    },
-    Document: function(node) {
-	return appendChildrenTo(node, 'div');
-    },
-    Paragraph: function(node) {
-	return appendChildrenTo(node, 'p');
-    },
-    BlockQuote: function(node) {
-	return appendChildrenTo(node, 'blockquote');	
-    },
-    Item: function(node) {
-	return appendChildrenTo(node, 'li');	
-    },
-    List: function(node) {
-	var dom = document.createElement(
-	    node.listType == 'Bullet' ? 'ul' : 'ol');
-	if (node.listStart != null &&
-	    node.listStart != 1) {
-	    dom.setAttribute('start',
-			     node.listStart.toString());
-	}
-	return appendChildren(node, dom);	
-    },
-    Header: function(node) {
-	return appendChildrenTo(node, 'h' + node.level);
-    },
-    CodeBlock: function(node) {
-	var text = document.createTextNode(node.literal);
-	var code = document.createElement('code');
-	var pre = document.createElement('pre');
-	code.appendChild(text);
-	pre.appendChild(code);
-	return pre;
-    },
-    HtmlBlock: function(node) {
-	console.warn('raw html block is not supported');
-	var dom = document.createElement('div');
-	dom.appendChild(document.createTextNode(node.literal));
-	return dom;
-    },
-    HorizontalRule: function(node) {
-	return document.createElement('hr');
-    }
 };
 
 var create = function(node) {
@@ -370,10 +229,138 @@ var updateChildren = function(node1, node2) {
 var SimpleCreator = function() {};
 SimpleCreator.prototype.create = create;
 
-var DiffCreator = function() {
+var Creator = function() {
     this.tree = null;
+    this.creators = {
+	Text: (node) => {
+	    return document.createTextNode();
+	},
+	Softbreak: (node) => {
+	    return document.createTextNode('\n');
+	},
+	Hardbreak: (node) => {
+	    return document.createElement('br');
+	},
+	Emph: (node) => {
+	    return document.createElement('em');
+	},
+	Strong: (node) => {
+	    return document.createElement('strong');
+	},
+	Html: (node) => {
+	    console.warn('raw html is not supported');
+	    return document.createTextNode(node.literal);
+	},
+	Link: (node) => {
+	    return document.createElement('a');
+	},
+	Image: (node) => {
+	    return document.createElement('image');
+	},
+	Code: (node) => {
+	    return document.createElement('code');
+	},
+	Document: (node) => {
+	    return document.createElement('div');
+	},
+	Paragraph: (node) => {
+	    return document.createElement('p');
+	},
+	BlockQuote: (node) => {
+	    return document.createElement('blockquote');	
+	},
+	Item: (node) => {
+	    return document.createElement('li');	
+	},
+	List: (node) => {
+	    return document.createElement(
+		node.listType == 'Bullet' ? 'ul' : 'ol');
+	},
+	Header: (node) => {
+	    return document.createElement('h' + node.level);
+	},
+	CodeBlock: (node) => {
+	    var text = document.createTextNode();
+	    var code = document.createElement('code');
+	    var pre = document.createElement('pre');
+	    code.appendChild(text);
+	    pre.appendChild(code);
+	    return pre;
+	},
+	HtmlBlock: (node) => {
+	    return document.createElement('div');
+	},
+	HorizontalRule: (node) => {
+	    return document.createElement('hr');
+	}	
+    };	    
+    this.onUpdate = {
+	Text: (node, dom) => {
+	    dom.textContent = node.literal;
+	},
+	Html: (node, dom) => {
+	    console.warn('raw html is not supported');
+	    dom.textContent = node.literal;
+	},
+	Link: (node, dom) => {
+	    dom.setAttribute('href', node.destination);
+	    if (node.title) {
+		dom.setAttribute('title', node.title);
+	    }
+	},
+	Image: (node, dom) => {
+	    dom.setAttribute('src', node.destination);
+	    if (node.title) {
+		dom.setAttribute('title', node.title);
+	    }
+	},
+	Code: (node, dom) => {
+	    dom.firstChild.textContent = node.literal;
+	},
+	List: (node, dom) => {
+	    if (node.listStart != null &&
+		node.listStart != 1) {
+		dom.setAttribute(
+		    'start',
+		    node.listStart.toString());
+	    }
+	},
+	CodeBlock: (node, dom) => {
+	    dom.firstChild.firstChild.textContent = node.literal;
+	},
+	HtmlBlock: (node, dom) => {
+	    console.warn('raw html block is not supported');
+	    dom.firstChild.textContent = node.literal;
+	}
+    };
+    this.specialRules = {
+	Image: (node, dom) => {
+	    var buf = [];
+	    forEachChild(node, (child) => {
+		buf.push(this.create(child).textContent);
+	    });
+	    dom.setAttribute('alt', buf.join(''));
+	}
+    };
 };
-DiffCreator.prototype.create = function(tree) {
+
+Creator.prototype.create = function(node) {
+    var dom = node.dom = this.creator[node.type](node);
+    this.onUpdate[node.type](node, dom);
+    if (this.specialRules[node.type]) {
+	this.specialRules[node.type](node, dom);
+    } else {
+	forEachChild(node, (child) => {
+	    node.dom.appendChild(this.create(child));
+	});
+    }
+    return dom;
+};
+
+Creator.prototype.update = function(tree) {
+    if (this.tree != null && this.tree.hashCode == null) {
+	
+    }
     console.time('hash');
     calcHash(tree);
     console.timeEnd('hash');
@@ -388,7 +375,7 @@ DiffCreator.prototype.create = function(tree) {
     return this.tree.dom;
 };
 module.exports.SimpleCreator = SimpleCreator;
-module.exports.DiffCreator = DiffCreator;
+module.exports.Creator = Creator;
 
 },{}],4:[function(require,module,exports){
 "use strict";

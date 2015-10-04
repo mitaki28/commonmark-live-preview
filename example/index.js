@@ -2,7 +2,7 @@ var cmark = require('commonmark');
 var domCreators = require('../');
 var htmlRenderer = new cmark.HtmlRenderer;
 var domCreator = new domCreators.SimpleCreator();
-var diffCreator = new domCreators.DiffCreator();
+var creator = new domCreators.Creator();
 var parser = new cmark.Parser();
 
 function removeChildren(dom) {
@@ -36,7 +36,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	    console.timeEnd('render(output)');
 	},
 	diff: function(tree, preview) {
-	    var dom = diffCreator.create(tree);
+	    var dom = creator.create(tree);
 	    if (!preview.contains(dom)) {
 		removeChildren(preview);
 		preview.appendChild(dom);		
