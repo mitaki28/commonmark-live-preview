@@ -8,7 +8,7 @@ var parser = new cmark.Parser();
 creator.onUpdate['CodeBlock'] = (node) => {
     var info_words = node.info ? node.info.split(/\s+/) : [];
     if (info_words.length > 0 && info_words[0].length > 0) {
-	node.dom.innerHTML = hljs.highlight(info_words[0], node.literal).value;	
+	node.dom.innerHTML = hljs.highlight(info_words[0], node.literal).value;
     } else {
 	node.dom.innerHTML = hljs.highlightAuto(node.literal).value;
     }
@@ -48,7 +48,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	    var dom = creator.update(tree);
 	    if (!preview.contains(dom)) {
 		removeChildren(preview);
-		preview.appendChild(dom);		
+		preview.appendChild(dom);
 	    }
 	}
     };
@@ -58,7 +58,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	var tree = parser.parse(text.value);
 	window.tree = tree;
 	console.timeEnd('parse');
-	
+
 	console.time('render');
 	renderers[mode](tree, preview);
 	console.timeEnd('render');
