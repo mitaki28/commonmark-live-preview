@@ -14,6 +14,25 @@ creator.onUpdate['CodeBlock'] = (node) => {
     }
 };
 
+creator.creators['Math'] = (node) => {
+    return document.createElement('span');
+};
+
+creator.creators['MathBlock'] = (node) => {
+    return document.createElement('div');
+};
+
+creator.onUpdate['Math'] = (node) => {
+    node.dom.textContent = '\\(' + node.literal + '\\)';
+    MathJax.Hub.Typeset(node.dom);
+};
+
+creator.onUpdate['MathBlock'] = (node) => {
+    node.dom.textContent = '\\[' + node.literal + '\\]';
+    MathJax.Hub.Typeset(node.dom);
+};
+
+
 function removeChildren(dom) {
     while (dom.lastChild) dom.removeChild(dom.lastChild);
 }
