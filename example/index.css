@@ -1,14 +1,38 @@
+html, body {
+    height: 100%;
+}
+
+main {
+    height: 100%;
+    width: 100%;
+    display: -webkit-box;
+    display: -moz-box;
+}
+
 #preview {
-    border-top: 1px solid #ddd;
-    padding-top: 1rem;
+    box-sizing: border-box;
+    border-left: 1px solid #ddd;
+    padding-left: 1rem;
+    width: 50%;
+    overflow: auto;
+    height: 100%;
+}
+
+#preview pre {
+    padding: .5rem;
+    background-color: #eee;
+    margin: .5rem;
 }
 
 #text {
-    width: 100%;
-    height: 20rem;
+    display: box;
+    margin: 0 1rem;
+    width: 80%;
+    height: 30rem;
 }
 
-#preview {
-    width: 100%;
+#edit {
+    box-sizing: border-box;
+    width: 50%;
+    heigth: 100%;
 }
-
