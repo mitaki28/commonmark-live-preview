@@ -24,12 +24,12 @@ creator.creators['MathBlock'] = (node) => {
 
 creator.onUpdate['Math'] = (node) => {
     node.dom.textContent = '\\(' + node.literal + '\\)';
-    MathJax.Hub.Typeset(node.dom);
+    MathJax.Hub.Queue(['Typeset', MathJax.Hub, node.dom]);
 };
 
 creator.onUpdate['MathBlock'] = (node) => {
     node.dom.textContent = '\\[' + node.literal + '\\]';
-    MathJax.Hub.Typeset(node.dom);
+    MathJax.Hub.Queue(['Typeset', MathJax.Hub, node.dom]);
 };
 
 
