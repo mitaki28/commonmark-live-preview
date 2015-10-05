@@ -11,8 +11,7 @@
   "devDependencies": {
     "babelify": "^6.3.0",
     "browserify": "^11.2.0",
-    "highlight.js": "^8.8.0",
-    "uglify-js": "^2.4.24"
+    "highlight.js": "^8.8.0"
   },
   "dependencies": {
     "commonmark": "^0.22.0"
