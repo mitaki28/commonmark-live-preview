@@ -1,19 +1,19 @@
 {
-  "name": "quicmark-preview",
-  "version": "0.0.1",
-  "description": "Quick realtime preview for CommonMark ",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "mitaki28",
-  "license": "ISC",
-  "devDependencies": {
-    "browserify": "^11.2.0",
-    "highlight.js": "^8.8.0",
-    "uglify-js": "^2.4.24"
-  },
-  "dependencies": {
-      "commonmark": "mitaki28/commonmark.js#math"
-  }
+    "name": "quicmark-preview",
+    "version": "0.0.1",
+    "description": "Quick realtime preview for CommonMark ",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "mitaki28",
+    "license": "ISC",
+    "devDependencies": {
+        "browserify": "^11.2.0",
+        "highlight.js": "^8.8.0",
+        "uglify-js": "^2.4.24"
+    },
+    "dependencies": {
+        "commonmark": "mitaki28/commonmark.js#math"
+    }
 }
