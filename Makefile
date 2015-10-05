@@ -8,5 +8,5 @@ SRC=$(wildcard lib/*.js) $(TARGET).js
 .PHONY: all
 
 all: $(TARGET).browserify.js
-$(TARGET).browserify.js: $(SRC) 
-	$(BROWSERIFY) $(TARGET).js -o $@ 
+$(TARGET).browserify.js: $(SRC)
+	$(BROWSERIFY) -t babelify $(TARGET).js -o $@
