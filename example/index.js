@@ -28,7 +28,6 @@ creator.onUpdate['Math'] = (node) => {
 };
 
 creator.onUpdate['MathBlock'] = (node) => {
-    console.log(node.literal);
     node.dom.textContent = '\\[' + node.literal + '\\]';
     MathJax.Hub.Queue(['Typeset', MathJax.Hub, node.dom]);
 };
