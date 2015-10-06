@@ -1,7 +1,7 @@
 {
-  "name": "commonmark-dom-creator",
+  "name": "quickmark",
   "version": "0.0.1",
-  "description": "create and update Document Object Model from abstract syntax tree created by commonmark.js",
+  "description": "CommonMark live previewer which quick rendering by incremental update",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
