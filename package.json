@@ -9,6 +9,7 @@
   "author": "mitaki28",
   "license": "ISC",
   "devDependencies": {
+    "bower": "^1.5.3",
     "browserify": "^11.2.0",
     "highlight.js": "^8.8.0"
   },
