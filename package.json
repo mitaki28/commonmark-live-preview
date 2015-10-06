@@ -1,5 +1,5 @@
 {
-  "name": "quickmark",
+  "name": "quicmark-preview",
   "version": "0.0.1",
   "description": "CommonMark live previewer which quick rendering by incremental update",
   "main": "index.js",
@@ -14,6 +14,7 @@
     "mocha": "^2.3.3"
   },
   "dependencies": {
-    "commonmark": "^0.22.0"
+    "commonmark": "^0.22.0",
+    "commonmark-dom-creator": "file:../commonmark-dom-creator"
   }
 }

@@ -1,7 +1,7 @@
 BIN=node_modules/.bin/
 BROWSERIFY=$(BIN)/browserify
-TARGET=example/index
-SRC=$(wildcard lib/*.js) index.js $(TARGET).js
+TARGET=index
+SRC=$(TARGET).js
 
 .PHONY: all
 
