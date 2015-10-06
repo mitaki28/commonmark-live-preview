@@ -15,11 +15,11 @@ creator.onUpdate['CodeBlock'] = (node) => {
 };
 
 creator.creators['Math'] = (node) => {
-    return document.createElement('span');
+    node.dom = document.createElement('span');
 };
 
 creator.creators['MathBlock'] = (node) => {
-    return document.createElement('div');
+    node.dom = document.createElement('div');
 };
 
 creator.onUpdate['Math'] = (node) => {
