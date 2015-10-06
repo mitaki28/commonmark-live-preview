@@ -8,10 +8,14 @@ var parser = new cmark.Parser();
 creator.onUpdate['CodeBlock'] = (node) => {
     var info_words = node.info ? node.info.split(/\s+/) : [];
     if (info_words.length > 0 && info_words[0].length > 0) {
-        node.dom.innerHTML = hljs.highlight(info_words[0], node.literal).value;
-    } else {
-        node.dom.innerHTML = hljs.highlightAuto(node.literal).value;
+        try {
+            node.dom.firstChild.innerHTML = hljs.highlight(info_words[0], node.literal).value;
+        } catch (e) {
+            node.dom.firstChild.textContent = node.literal;
+        }
+        return;
     }
+    node.dom.firstChild.innerHTML = hljs.highlightAuto(node.literal).value;
 };
 
 function removeChildren(dom) {
