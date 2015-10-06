@@ -9,9 +9,9 @@
   "author": "mitaki28",
   "license": "ISC",
   "devDependencies": {
-    "babelify": "^6.3.0",
     "browserify": "^11.2.0",
-    "highlight.js": "^8.8.0"
+    "highlight.js": "^8.8.0",
+    "mocha": "^2.3.3"
   },
   "dependencies": {
     "commonmark": "mitaki28/commonmark.js#math"
