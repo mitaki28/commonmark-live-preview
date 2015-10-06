@@ -8,11 +8,9 @@
   },
   "author": "mitaki28",
   "license": "ISC",
-  "devDependencies": {
-    "browserify": "^11.2.0",
-    "highlight.js": "^8.8.0"
-  },
   "dependencies": {
+    "browserify": "^11.2.0",
+    "highlight.js": "^8.8.0",
     "commonmark": "^0.22.0",
     "commonmark-dom-creator": "file:../commonmark-dom-creator"
   }
