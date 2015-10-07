@@ -36,3 +36,19 @@ main {
     width: 50%;
     heigth: 100%;
 }
+
+figure {
+    text-align: center;
+}
+
+figure button {
+    margin: 1rem auto;
+    display: block;
+    width: 320px;
+    height: 240px;
+}
+
+figure img {
+    max-width: 320px;
+    max-height: 240px;
+}

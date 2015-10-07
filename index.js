@@ -18,6 +18,55 @@ creator.onUpdate['CodeBlock'] = (node) => {
     node.dom.firstChild.innerHTML = hljs.highlightAuto(node.literal).value;
 };
 
+creator.creators['Image'] = (node) => {
+    node.dom = document.createElement('figure');
+    node.container = document.createElement('p');
+    node.dom._img = document.createElement('img');
+    node.dom._loader = document.createElement('div');
+    node.dom._loadButton = document.createElement('button');
+    node.dom._loadButton.textContent = 'load';
+    node.dom._src = document.createElement('a');
+    node.dom._src.setAttribute('target', '_blank');
+    node.dom._alt = node.container;
+    node.dom._caption = document.createElement('figcaption');
+    node.dom.appendChild(node.dom._loader);
+    node.dom.appendChild(node.dom._img);
+
+    node.dom._loader.appendChild(node.dom._loadButton);
+    node.dom._loader.appendChild(node.dom._caption);
+    node.dom._loader.appendChild(node.dom._src);
+    node.dom._loader.appendChild(node.dom._alt);
+};
+
+creator.onUpdate['Image'] = (node) => {
+    if (node.dom._img.parentNode == node.dom) {
+        node.dom.removeChild(node.dom._img);
+    }
+    if (node.dom._loader.parentNode != node.dom) {
+        node.dom.appendChild(node.dom._loader);
+    }
+    var src = node.destination;
+    var title = node.title;
+    node.dom._src.textContent = src;
+    node.dom._src.setAttribute('href', src);
+    if (title != null) {
+        node.dom._caption.textContent = title;
+    }
+    node.dom._loadButton.onclick = (e) => {
+        node.dom._img.setAttribute('alt',
+                                   node.dom._alt.textContent);
+        node.dom._img.setAttribute('src', src);
+        if (title != null) {
+            node.dom._img.setAttribute('title', title);
+        }
+        node.dom.appendChild(node.dom._img);
+        node.dom.removeChild(node.dom._loader);
+    };
+};
+
+delete creator.onChildUpdated['Image'];
+
+
 function removeChildren(dom) {
     while (dom.lastChild) dom.removeChild(dom.lastChild);
 }
