@@ -75,37 +75,14 @@ window.addEventListener('DOMContentLoaded', function() {
     var text = document.getElementById('text');
     var preview = document.getElementById('preview');
     var modeSelector = document.getElementById('mode');
-    var mode = "none";
-    var renderers = {
-        none: function(tree, preview) {
-
-        },
-        dom: function(tree, preview) {
-            var dom = creator.create(tree);
-            removeChildren(preview);
-            preview.appendChild(dom);
-        },
-        html: function(tree, preview) {
-            var html = htmlRenderer.render(tree);
-            preview.innerHTML = html;
-        },
-        diff: function(tree, preview) {
-            var dom = creator.update(tree);
-            if (!preview.contains(dom)) {
-                removeChildren(preview);
-                preview.appendChild(dom);
-            }
-        }
-    };
     var render = function() {
         var tree = parser.parse(text.value);
         window.tree = tree;
-
-        renderers[mode](tree, preview);
+        var dom = creator.update(tree);
+        if (!preview.contains(dom)) {
+            removeChildren(preview);
+            preview.appendChild(dom);
+        }
     };
-    modeSelector.addEventListener('change', function() {
-        mode = modeSelector.value;
-        render();
-    });
     text.addEventListener('keyup', render);
 });
