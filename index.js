@@ -8,11 +8,16 @@ var parser = new cmark.Parser();
 creator.onUpdate['CodeBlock'] = (node) => {
     var info_words = node.info ? node.info.split(/\s+/) : [];
     if (info_words.length > 0 && info_words[0].length > 0) {
-        node.dom.innerHTML = hljs.highlight(info_words[0], node.literal).value;
-    } else {
-        node.dom.innerHTML = hljs.highlightAuto(node.literal).value;
+        try {
+            node.dom.firstChild.innerHTML = hljs.highlight(info_words[0], node.literal).value;
+        } catch (e) {
+            node.dom.firstChild.textContent = node.literal;
+        }
+        return;
     }
+    node.dom.firstChild.innerHTML = hljs.highlightAuto(node.literal).value;
 };
+
 
 creator.creators['Math'] = (node) => {
     node.dom = document.createElement('span');
@@ -32,6 +37,52 @@ creator.onUpdate['MathBlock'] = (node) => {
     MathJax.Hub.Queue(['Typeset', MathJax.Hub, node.dom]);
 };
 
+creator.creators['Image'] = (node) => {
+    node.dom = document.createElement('figure');
+    node.container = document.createElement('p');
+    node.dom._img = document.createElement('img');
+    node.dom._loader = document.createElement('div');
+    node.dom._loadButton = document.createElement('button');
+    node.dom._loadButton.textContent = 'load';
+    node.dom._src = document.createElement('a');
+    node.dom._src.setAttribute('target', '_blank');
+    node.dom._alt = node.container;
+    node.dom._caption = document.createElement('figcaption');
+    node.dom.appendChild(node.dom._loader);
+    node.dom.appendChild(node.dom._img);
+
+    node.dom._loader.appendChild(node.dom._loadButton);
+    node.dom._loader.appendChild(node.dom._caption);
+    node.dom._loader.appendChild(node.dom._src);
+    node.dom._loader.appendChild(node.dom._alt);
+};
+creator.onUpdate['Image'] = (node) => {
+    if (node.dom._img.parentNode == node.dom) {
+        node.dom.removeChild(node.dom._img);
+    }
+    if (node.dom._loader.parentNode != node.dom) {
+        node.dom.appendChild(node.dom._loader);
+    }
+    var src = node.destination;
+    var title = node.title;
+    node.dom._src.textContent = src;
+    node.dom._src.setAttribute('href', src);
+    if (title != null) {
+        node.dom._caption.textContent = title;
+    }
+    node.dom._loadButton.onclick = (e) => {
+        node.dom._img.setAttribute('alt',
+                                   node.dom._alt.textContent);
+        node.dom._img.setAttribute('src', src);
+        if (title != null) {
+            node.dom._img.setAttribute('title', title);
+        }
+        node.dom.appendChild(node.dom._img);
+        node.dom.removeChild(node.dom._loader);
+    };
+};
+delete creator.onChildUpdated['Image'];
+
 
 function removeChildren(dom) {
     while (dom.lastChild) dom.removeChild(dom.lastChild);
@@ -47,21 +98,13 @@ window.addEventListener('DOMContentLoaded', function() {
 
         },
         dom: function(tree, preview) {
-            console.time('render(internal)');
             var dom = creator.create(tree);
-            console.timeEnd('render(internal)');
-            console.time('render(output)');
             removeChildren(preview);
             preview.appendChild(dom);
-            console.timeEnd('render(output)');
         },
         html: function(tree, preview) {
-            console.time('render(internal)');
             var html = htmlRenderer.render(tree);
-            console.timeEnd('render(internal)');
-            console.time('render(output)');
             preview.innerHTML = html;
-            console.timeEnd('render(output)');
         },
         diff: function(tree, preview) {
             var dom = creator.update(tree);
@@ -72,15 +115,10 @@ window.addEventListener('DOMContentLoaded', function() {
         }
     };
     var render = function() {
-        console.log('rendering mode', mode);
-        console.time('parse');
         var tree = parser.parse(text.value);
         window.tree = tree;
-        console.timeEnd('parse');
 
-        console.time('render');
         renderers[mode](tree, preview);
-        console.timeEnd('render');
     };
     modeSelector.addEventListener('change', function() {
         mode = modeSelector.value;
