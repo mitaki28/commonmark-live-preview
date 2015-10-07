@@ -81,21 +81,13 @@ window.addEventListener('DOMContentLoaded', function() {
 
         },
         dom: function(tree, preview) {
-            console.time('render(internal)');
             var dom = creator.create(tree);
-            console.timeEnd('render(internal)');
-            console.time('render(output)');
             removeChildren(preview);
             preview.appendChild(dom);
-            console.timeEnd('render(output)');
         },
         html: function(tree, preview) {
-            console.time('render(internal)');
             var html = htmlRenderer.render(tree);
-            console.timeEnd('render(internal)');
-            console.time('render(output)');
             preview.innerHTML = html;
-            console.timeEnd('render(output)');
         },
         diff: function(tree, preview) {
             var dom = creator.update(tree);
@@ -106,15 +98,10 @@ window.addEventListener('DOMContentLoaded', function() {
         }
     };
     var render = function() {
-        console.log('rendering mode', mode);
-        console.time('parse');
         var tree = parser.parse(text.value);
         window.tree = tree;
-        console.timeEnd('parse');
 
-        console.time('render');
         renderers[mode](tree, preview);
-        console.timeEnd('render');
     };
     modeSelector.addEventListener('change', function() {
         mode = modeSelector.value;
