@@ -1,5 +1,5 @@
 {
-  "name": "quicmark-preview",
+  "name": "commonmark-live-preview",
   "version": "0.0.1",
   "description": "CommonMark live previewer which quick rendering by incremental update",
   "main": "index.js",
