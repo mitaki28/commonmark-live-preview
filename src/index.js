@@ -88,18 +88,66 @@ function removeChildren(dom) {
     while (dom.lastChild) dom.removeChild(dom.lastChild);
 }
 
+function syncSourceMap(node1, node2) {
+    var c1 = node1.firstChild, c2 = node2.firstChild;
+    while (c1 != null) {
+        syncSourceMap(c1, c2);
+        c1 = c1.next, c2 = c2.next;
+    }
+    node2.sourcepos = node1.sourcepos;
+}
+
+function mapCursor(node, pos) {
+    var c = node.firstChild;
+    while (c != null) {
+        var ans = mapCursor(c, pos);
+        if (ans) return ans;
+        c = c.next;
+    }
+    var npos = node.sourcepos;
+    if (npos) {
+        var srow = npos[0][0], scol = npos[0][1],
+            erow = npos[1][0], ecol = npos[1][1];
+        if (srow <= pos.row + 1 && pos.row + 1 <= erow) {
+            return node;
+        }
+    }
+    return null;
+}
+
 window.addEventListener('DOMContentLoaded', function() {
-    var text = document.getElementById('text');
+    var editor = ace.edit('edit');
+    editor.setTheme('ace/theme/github');
+    editor.getSession().setMode('ace/mode/markdown');
+    editor.getSession().setUseWrapMode(true);
     var preview = document.getElementById('preview');
     var modeSelector = document.getElementById('mode');
     var render = function() {
-        var tree = parser.parse(text.value);
+        var tree = parser.parse(editor.getValue());
         window.tree = tree;
         var dom = creator.update(tree);
         if (!preview.contains(dom)) {
             removeChildren(preview);
             preview.appendChild(dom);
         }
+        syncSourceMap(creator.tree,
+                      parser.parse(editor.getValue()));
+
     };
-    text.addEventListener('keyup', render);
+    editor.getSession().on('change', function(e) {
+        render();
+    });
+    editor.commands.addCommand({
+        name: 'sync view',
+        bindKey: {win: 'Ctrl-l',  mac: 'Command-l'},
+        exec: function(editor) {
+            var cursor = editor.getSelection().getCursor();
+            var d = mapCursor(creator.tree, cursor);
+            if (d != null && d.dom.parentNode != preview) {
+                editor.centerSelection();
+                preview.scrollTop = -preview.clientHeight / 2 + preview.scrollTop + d.dom.getBoundingClientRect().top;
+            }
+        }
+    });
+    render();
 });
