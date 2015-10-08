@@ -9,7 +9,6 @@
   "author": "mitaki28",
   "license": "ISC",
  "dependencies": {
-    "bower": "^1.5.3",
     "browserify": "^11.2.0",
     "highlight.js": "^8.8.0",
     "commonmark": "mitaki28/commonmark.js#math",
