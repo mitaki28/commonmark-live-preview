@@ -1,7 +1,7 @@
 {
   "name": "commonmark-live-preview",
   "version": "0.0.1",
-  "description": "CommonMark live previewer which quick rendering by incremental update",
+  "description": "CommonMark live previewer, rendering incrementally",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,6 +12,6 @@
     "browserify": "^11.2.0",
     "highlight.js": "^8.8.0",
     "commonmark": "^0.22.0",
-    "commonmark-dom-creator": "file:../commonmark-dom-creator"
+    "commonmark-dom-creator": "mitaki28/commonmark-dom-creator"
   }
 }
