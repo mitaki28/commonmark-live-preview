@@ -1,10 +1,20 @@
-BIN=node_modules/.bin/
+NODE_MODULES=node_modules/
+
+BIN=$(NODE_MODULES)/.bin/
+
 BROWSERIFY=$(BIN)/browserify
+NPM=npm
+
 TARGET=index
-SRC=$(TARGET).js
+SRC=src/index.js
+DIST=dist/index.browserify.js
 
 .PHONY: all
 
-all: $(TARGET).browserify.js
-$(TARGET).browserify.js: $(SRC)
-	$(BROWSERIFY) $(TARGET).js -o $@
+all: $(DIST)
+$(DIST): $(SRC) $(NODE_MODULES)
+	$(BROWSERIFY) $< -o $@
+
+$(NODE_MODULES):
+	$(NPM) install
+
