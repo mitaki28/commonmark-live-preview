@@ -102,6 +102,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var editor = ace.edit('edit');
     editor.setTheme('ace/theme/github');
     editor.getSession().setMode('ace/mode/markdown');
+    editor.getSession().setUseWrapMode(true);
     var preview = document.getElementById('preview');
     var modeSelector = document.getElementById('mode');
     var render = function() {
@@ -118,13 +119,6 @@ window.addEventListener('DOMContentLoaded', function() {
     };
     editor.getSession().on('change', function(e) {
         render();
-    });
-    editor.getSession().on('changeScrollTop', function(e) {
-        var cursor = {row: editor.getFirstVisibleRow(), column: 0};
-        var d = mapCursor(creator.tree, cursor);
-        if (d != null && d.dom.parentNode != preview) {
-            preview.scrollTop = preview.scrollTop + d.dom.getBoundingClientRect().top;
-        }
     });
     editor.commands.addCommand({
         name: 'sync view',
