@@ -10,8 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "browserify": "^11.2.0",
-    "highlight.js": "^8.8.0",
     "commonmark": "^0.22.0",
-    "commonmark-dom-creator": "mitaki28/commonmark-dom-creator"
+    "commonmark-dom-creator": "mitaki28/commonmark-dom-creator",
+    "highlight.js": "^8.8.0"
   }
 }
