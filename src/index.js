@@ -1,88 +1,108 @@
+'use strict';
+
 var cmark = require('commonmark');
 var hljs = require('highlight.js');
 var DomCreator = require('commonmark-dom-creator');
 var htmlRenderer = new cmark.HtmlRenderer;
 var creator = new DomCreator();
 var parser = new cmark.Parser();
+var Rule = require('commonmark-dom-creator/lib/rule').Rule;
+var CodeBlockRule = require('commonmark-dom-creator/lib/rule/dom').CodeBlockRule;
 
-creator.onUpdate['CodeBlock'] = (node) => {
-    var info_words = node.info ? node.info.split(/\s+/) : [];
-    if (info_words.length > 0 && info_words[0].length > 0) {
+class MathRule extends Rule {
+    init(node) {
+        node.dom = document.createElement('span');
+    }
+    update(node) {
+        node.dom.textContent = '\\(' + node.literal + '\\)';
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, node.dom]);
+    }
+}
+
+class MathBlockRule extends Rule {
+    init(node) {
+        node.dom = document.createElement('div');
+    }
+    update(node) {
+        node.dom.textContent = '\\[' + node.literal + '\\]';
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, node.dom]);
+    }
+}
+
+class HighlightCodeBlockRule extends CodeBlockRule {
+    highlight(node, lang) {
+        if (lang == null) {
+            node.dom._data.textContent = node.literal;
+            return;
+        }
         try {
-            node.dom.firstChild.innerHTML = hljs.highlight(info_words[0], node.literal).value;
+            var result = hljs.highlight(lang,node.literal).value;
+            node.dom._data.innerHTML = result;
         } catch (e) {
-            node.dom.firstChild.textContent = node.literal;
+            node.dom._data.textContent = node.literal;
         }
-        return;
     }
-    node.dom.firstChild.innerHTML = hljs.highlightAuto(node.literal).value;
-};
-
-
-creator.creators['Math'] = (node) => {
-    node.dom = document.createElement('span');
-};
-
-creator.creators['MathBlock'] = (node) => {
-    node.dom = document.createElement('div');
-};
-
-creator.onUpdate['Math'] = (node) => {
-    node.dom.textContent = '\\(' + node.literal + '\\)';
-    MathJax.Hub.Queue(['Typeset', MathJax.Hub, node.dom]);
-};
-
-creator.onUpdate['MathBlock'] = (node) => {
-    node.dom.textContent = '\\[' + node.literal + '\\]';
-    MathJax.Hub.Queue(['Typeset', MathJax.Hub, node.dom]);
-};
-
-creator.creators['Image'] = (node) => {
-    node.dom = document.createElement('figure');
-    node.container = document.createElement('p');
-    node.dom._img = document.createElement('img');
-    node.dom._loader = document.createElement('div');
-    node.dom._loadButton = document.createElement('button');
-    node.dom._loadButton.textContent = 'load';
-    node.dom._src = document.createElement('a');
-    node.dom._src.setAttribute('target', '_blank');
-    node.dom._alt = node.container;
-    node.dom._caption = document.createElement('figcaption');
-    node.dom.appendChild(node.dom._loader);
-    node.dom.appendChild(node.dom._img);
-
-    node.dom._loader.appendChild(node.dom._loadButton);
-    node.dom._loader.appendChild(node.dom._caption);
-    node.dom._loader.appendChild(node.dom._src);
-    node.dom._loader.appendChild(node.dom._alt);
-};
-creator.onUpdate['Image'] = (node) => {
-    if (node.dom._img.parentNode == node.dom) {
-        node.dom.removeChild(node.dom._img);
+    update(node) {
+        var info_words = node.info ? node.info.split(/\s+/) : [];
+        if (info_words.length > 0 && info_words[0].length > 0) {
+            this.highlight(node, info_words[0]);
+        } else {
+            this.highlight(node, null);
+        }
     }
-    if (node.dom._loader.parentNode != node.dom) {
+}
+
+class LazyImageRule extends Rule {
+    init(node) {
+        node.dom = document.createElement('figure');
+        node.container = document.createElement('p');
+        node.dom._img = document.createElement('img');
+        node.dom._loader = document.createElement('div');
+        node.dom._loadButton = document.createElement('button');
+        node.dom._loadButton.textContent = 'load';
+        node.dom._src = document.createElement('a');
+        node.dom._src.setAttribute('target', '_blank');
+        node.dom._alt = node.container;
+        node.dom._caption = document.createElement('figcaption');
         node.dom.appendChild(node.dom._loader);
-    }
-    var src = node.destination;
-    var title = node.title;
-    node.dom._src.textContent = src;
-    node.dom._src.setAttribute('href', src);
-    if (title != null) {
-        node.dom._caption.textContent = title;
-    }
-    node.dom._loadButton.onclick = (e) => {
-        node.dom._img.setAttribute('alt',
-                                   node.dom._alt.textContent);
-        node.dom._img.setAttribute('src', src);
-        if (title != null) {
-            node.dom._img.setAttribute('title', title);
-        }
         node.dom.appendChild(node.dom._img);
-        node.dom.removeChild(node.dom._loader);
-    };
-};
-delete creator.onChildUpdated['Image'];
 
+        node.dom._loader.appendChild(node.dom._loadButton);
+        node.dom._loader.appendChild(node.dom._caption);
+        node.dom._loader.appendChild(node.dom._src);
+        node.dom._loader.appendChild(node.dom._alt);
+    }
+
+    update(node) {
+        if (node.dom._img.parentNode == node.dom) {
+            node.dom.removeChild(node.dom._img);
+        }
+        if (node.dom._loader.parentNode != node.dom) {
+            node.dom.appendChild(node.dom._loader);
+        }
+        var src = node.destination;
+        var title = node.title;
+        node.dom._src.textContent = src;
+        node.dom._src.setAttribute('href', src);
+        if (title != null) {
+            node.dom._caption.textContent = title;
+        }
+        node.dom._loadButton.onclick = (e) => {
+            node.dom._img.setAttribute('alt',
+                                       node.dom._alt.textContent);
+            node.dom._img.setAttribute('src', src);
+            if (title != null) {
+                node.dom._img.setAttribute('title', title);
+            }
+            node.dom.appendChild(node.dom._img);
+            node.dom.removeChild(node.dom._loader);
+        };
+    }
+}
+creator.rule.map['CodeBlock'] = new HighlightCodeBlockRule;
+creator.rule.map['Image'] = new LazyImageRule;
+creator.rule.map['Math'] = new MathRule;
+creator.rule.map['MathBlock'] = new MathBlockRule;
 
 function removeChildren(dom) {
     while (dom.lastChild) dom.removeChild(dom.lastChild);
@@ -94,7 +114,7 @@ function syncSourceMap(node1, node2) {
         syncSourceMap(c1, c2);
         c1 = c1.next, c2 = c2.next;
     }
-    node2.sourcepos = node1.sourcepos;
+    node2._sourcepos = node1._sourcepos;
 }
 
 function mapCursor(node, pos) {
@@ -123,16 +143,14 @@ window.addEventListener('DOMContentLoaded', function() {
     var preview = document.getElementById('preview');
     var modeSelector = document.getElementById('mode');
     var render = function() {
+        console.time('render');
         var tree = parser.parse(editor.getValue());
-        window.tree = tree;
         var dom = creator.update(tree);
         if (!preview.contains(dom)) {
             removeChildren(preview);
             preview.appendChild(dom);
         }
-        syncSourceMap(creator.tree,
-                      parser.parse(editor.getValue()));
-
+        console.timeEnd('render');
     };
     editor.getSession().on('change', function(e) {
         render();
@@ -141,6 +159,8 @@ window.addEventListener('DOMContentLoaded', function() {
         name: 'sync view',
         bindKey: {win: 'Ctrl-l',  mac: 'Command-l'},
         exec: function(editor) {
+            syncSourceMap(creator.tree,
+                          parser.parse(editor.getValue()));
             var cursor = editor.getSelection().getCursor();
             var d = mapCursor(creator.tree, cursor);
             if (d != null && d.dom.parentNode != preview) {
