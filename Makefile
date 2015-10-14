@@ -13,7 +13,7 @@ DIST=dist/index.browserify.js
 
 all: $(DIST)
 $(DIST): $(SRC) $(NODE_MODULES)
-	$(BROWSERIFY) $< -o $@
+	$(BROWSERIFY) $(SRC) -o $@
 
 $(NODE_MODULES):
 	$(NPM) install
